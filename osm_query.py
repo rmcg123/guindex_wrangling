@@ -4,6 +4,10 @@ import pandas as pd
 
 
 def osm_query(element, amenity):
+    """Function that sends a get request to OSMs overpass
+    API and retrieves all amenities of type element within
+    ROI administrative area and saves as csv and returns
+    dataframe."""
 
     overpass_url = "http://overpass-api.de/api/interpreter"
 
@@ -29,6 +33,8 @@ def osm_query(element, amenity):
 
 
 def get_all_osm(elements, amenities):
+    """Function that calls the osm query for all elements
+    and amenities of interest."""
 
     for element in elements:
         for amenity in amenities:
