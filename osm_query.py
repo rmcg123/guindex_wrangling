@@ -25,3 +25,12 @@ def osm_query(element, amenity):
 
     pubs.to_csv(f"{amenity}_{element}.csv")
 
+    return pubs
+
+
+def get_all_osm(elements, amenities):
+
+    for element in elements:
+        for amenity in amenities:
+            _ = osm_query(element, amenity)
+
