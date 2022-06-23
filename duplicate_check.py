@@ -50,3 +50,43 @@ def distances(data1, data2):
                 )
 
     return dists
+
+
+def which_pubs(dists, data1, data2, threshold):
+    """Creates a list of tuples containing pubs index and name from each dataset that are separated by less than a chosen threshold distance."""
+
+    lst = []
+    dists = np.array(dists)
+    for i in range(dists.shape[0]):
+        for j in range(dists.shape[1]):
+            if i <= j:
+                continue
+            if dists[i, j] < 0.01:
+                lst.append((i, data1["name"][i], j, data2["name"][j]))
+            else:
+                continue
+
+    return lst
+
+
+def get_dupes(dupes):
+    """Creates a list of duplicates."""
+    lst = []
+    if len(dupes) == 0:
+        pass
+    else:
+        for i in range(len(dupes)):
+            lst.append(dupes[i][0])
+
+    return lst
+
+
+def remaining_pubs(pubs, drop, county):
+    """Drops the duplicated pubs leaving the remaining ones."""
+    rem = set(pubs[county].index.to_list()) - set(drop[county])
+
+    pub_rem = pubs[county][pubs[county].index.isin(rem)]
+
+    return pub_rem
+
+

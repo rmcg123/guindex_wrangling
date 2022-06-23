@@ -9,4 +9,6 @@ Which gets and combines all the OSM data we are interested in.
 
 The script `guindex_query.py` retrieves all the guindex pubs data.
 
+The script `duplicate_check.py` contains functions to check datasets for duplicates within itself or against another.
+
 Geographic information of county boundaries can be obtained at: https://www.townlands.ie/page/download/ . 
