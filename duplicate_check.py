@@ -5,14 +5,14 @@ from math import radians
 guindex_pubs = pd.read_csv("guindex_pubs.csv", index_col="Unnamed: 0")
 osm_pubs = pd.read_csv("all_osm_pubs.csv", index_col="Unnamed: 0")
 
-counties = osm_pubs["county"].unique()
+counties = osm_pubs["county"].dropna().unique()
 
 
 def pubs_counties(data, county, pubs_dict):
     """Creates a dictionary entry with key "county" and value pubs from that
     county."""
 
-    pubs_dict[county] = data.loc[data["county"].eq(county), :]
+    pubs_dict[county] = data.loc[data["county"].eq(county), :].reset_index(drop=False)
 
     return pubs_dict
 
@@ -100,18 +100,15 @@ def full_check(data):
     for county in counties:
         _ = pubs_counties(data, county, county_pubs)
 
-    print(county_pubs)
 
     county_dists = {}
     for county in counties:
-        _ = distances(data, data, county, county_dists)
+        _ = distances(county_pubs[county], county_pubs[county], county, county_dists)
 
-    print(county_dists)
 
     which_dict = {}
     for county in counties:
         _ = which_pubs(county_dists[county], county_pubs[county], county_pubs[county], county, which_dict)
 
-    print(which_dict)
 
 full_check(osm_pubs)
