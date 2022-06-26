@@ -11,4 +11,6 @@ The script `guindex_query.py` retrieves all the guindex pubs data.
 
 The script `duplicate_check.py` contains functions to check datasets for duplicates within itself or against another.
 
+The script `categorise_pubs_by_county.py` uses county polygons to sort the pubs with missing counties. 
+
 Geographic information of county boundaries can be obtained at: https://www.townlands.ie/page/download/ . 
