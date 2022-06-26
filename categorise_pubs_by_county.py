@@ -2,7 +2,7 @@ import pandas as pd
 from shapely import wkt
 from shapely.geometry import Point
 
-no_counties = pd.read_csv("osm_pubs_with_no_counties.csv")
+no_counties = pd.read_csv("osm_pubs_with_no_counties.csv", index_col="Unnamed: 0")
 shapes = pd.read_csv("counties.csv")
 
 shapes["geoms"] = shapes["WKT"].apply(wkt.loads)

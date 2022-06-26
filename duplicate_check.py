@@ -6,6 +6,12 @@ from fuzzywuzzy import fuzz
 guindex_pubs = pd.read_csv("guindex_pubs.csv", index_col="Unnamed: 0")
 osm_pubs = pd.read_csv("all_osm_pubs.csv", index_col="Unnamed: 0")
 
+no_counties = osm_pubs.loc[osm_pubs["county"].isna(), :]
+
+no_counties.to_csv("osm_pubs_with_no_counties.csv")
+
+osm_pubs = osm_pubs[~osm_pubs["county"].isna(), :]
+
 counties = osm_pubs["county"].dropna().unique()
 
 
