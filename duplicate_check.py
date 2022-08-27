@@ -2,17 +2,7 @@ import pandas as pd
 import numpy as np
 from math import radians
 from fuzzywuzzy import fuzz
-
-guindex_pubs = pd.read_csv("guindex_pubs.csv", index_col="Unnamed: 0")
-osm_pubs = pd.read_csv("all_osm_pubs.csv", index_col="Unnamed: 0")
-
-no_counties = osm_pubs.loc[osm_pubs["county"].isna(), :]
-
-no_counties.to_csv("osm_pubs_with_no_counties.csv")
-
-osm_pubs = osm_pubs[~osm_pubs["county"].isna(), :]
-
-counties = osm_pubs["county"].dropna().unique()
+from categorise_pubs_by_county import categorise_pubs
 
 
 def pubs_counties(data, county, pubs_dict):
@@ -26,14 +16,14 @@ def pubs_counties(data, county, pubs_dict):
     return pubs_dict
 
 
-def distances(data1, data2, county, dist_dict):
+def distances(data1, data2, county, dist_dict, cross=False):
     """Creates an array with distances between pubs in a chosen county."""
 
     dists = np.zeros(len(data1) * len(data2)).reshape(len(data1), len(data2))
 
     for i in range(len(data1)):
         for j in range(len(data2)):
-            if i <= j:
+            if i <= j and not cross:
                 dists[i, j] = np.nan
             else:
                 lat1, lon1, lat2, lon2 = map(
@@ -111,18 +101,25 @@ def remaining_pubs(pubs, drop, county):
     return pub_rem
 
 
-def full_check(data):
+def full_check(data, counties):
 
+    # Create a dictionary with counties as keys and DataFrames of pubs as
+    # values.
     county_pubs = {}
     for county in counties:
         _ = pubs_counties(data, county, county_pubs)
 
+    # Create another dictionary with counties as keys and np.arrays of
+    # distances between pubs as entries.
     county_dists = {}
     for county in counties:
         _ = distances(
             county_pubs[county], county_pubs[county], county, county_dists
         )
 
+    # Create a dictionary with counties as keys and lists of
+    # (index_1, name_1, index_2, name_2) tuples of pubs within a certain
+    # distance.
     which_dict = {}
     for county in counties:
         _ = which_pubs(
@@ -133,25 +130,76 @@ def full_check(data):
             which_dict,
         )
 
-    print(which_dict)
-
+    # Creates a dictionary with counties as keys and lists of duplicates as
+    # values.
     drop_dupes = {}
     for county in counties:
         drop_dupes[county] = get_dupes(which_dict[county])
 
-    print(drop_dupes)
-
+    # Creates a dictionary with counties as keys and pd.DataFrame of remaining
+    # pubs as values.
     rem_pubs = {}
     for county in counties:
         rem_pubs[county] = remaining_pubs(county_pubs, drop_dupes, county)
 
-    print(rem_pubs)
+    return rem_pubs, which_dict
 
 
 def main():
+    """Main function."""
 
-    for data in [osm_pubs, guindex_pubs]:
-        full_check(data)
+    # Import guindex and osm pubs.
+    guindex_pubs = pd.read_csv("guindex_pubs.csv", index_col="Unnamed: 0")
+    osm_pubs = pd.read_csv("all_osm_pubs.csv", index_col="Unnamed: 0")
+
+    # Find osm pubs that do not have a county.
+    no_counties = osm_pubs.loc[osm_pubs["county"].isna(), :]
+
+    # Save pubs missing counties in a csv.
+    no_counties.to_csv("osm_pubs_with_no_counties.csv")
+
+    # Take slice of osm DataFrame where there are counties.
+    osm_pubs = osm_pubs.loc[~osm_pubs["county"].isna(), :].reset_index(
+        drop=True
+    )
+
+    # Add counties for those missing them.
+    counties_added = categorise_pubs()
+
+    print(counties_added)
+
+    # Re-combine osm pubs.
+    all_osm_pubs = pd.concat([osm_pubs, counties_added], ignore_index=True)
+
+    all_osm_pubs.to_csv("all_osm_pubs_with_counties.csv")
+
+    # Unique counties in osm pubs.
+    counties = all_osm_pubs["county"].dropna().unique()
+
+    # For each of the two pubs dataset perform the full duplicate check.
+    for data in ["osm", "guindex"]:
+        if data == "osm":
+            dat = all_osm_pubs
+        else:
+            dat = guindex_pubs
+
+        rem_pubs, which_dict = full_check(dat, counties)
+
+        # Re-combine all counties DataFrames into a single DataFrame.
+        rem_pubs = pd.concat(
+            [v for v in rem_pubs.values()], ignore_index=True
+        ).reset_index(drop=True)
+
+        # Save non-duplicate pubs to csv.
+        rem_pubs.to_csv(f"{data}_pubs_no_dupes.csv")
+
+        # Combine duplicates from all counties into a single DataFrame.
+        which_dict = pd.concat(
+            [pd.DataFrame(v) for v in which_dict.values()], ignore_index=True
+        ).reset_index(drop=True)
+
+        # Output duplicates to a csv for inspection.
+        which_dict.to_csv(f"{data}_pubs_dropped_dupes.csv")
 
 
 if __name__ == "__main__":
