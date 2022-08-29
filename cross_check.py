@@ -1,20 +1,11 @@
 import pandas as pd
 import numpy as np
 from fuzzywuzzy import fuzz
-from duplicate_check import (
-    pubs_counties,
-    distances,
-)
+from duplicate_check import pubs_counties, distances
 
 
 def which_pubs(
-        dists,
-        data1,
-        data2,
-        county,
-        which_pubs_dict,
-        threshold_1,
-        threshold_2
+    dists, data1, data2, county, which_pubs_dict, threshold_1, threshold_2
 ):
     """Creates a list of tuples containing pubs index and name from each
      dataset that are separated by more than a chosen threshold distance."""
@@ -26,9 +17,12 @@ def which_pubs(
         if min(dists[i]) > threshold_1:
             lst.append((i, data1["name"][i], min(dists[i]), 1))
         elif min(dists[i]) > threshold_2:
-            if fuzz.partial_ratio(data1["name"][i], data2["name"][np.argmin(
-                    dists[i]
-                                                                    )]) < 75:
+            if (
+                fuzz.partial_ratio(
+                    data1["name"][i], data2["name"][np.argmin(dists[i])]
+                )
+                < 75
+            ):
                 lst.append((i, data1["name"][i], min(dists[i]), 2))
             else:
                 continue
@@ -38,10 +32,15 @@ def which_pubs(
             tmp_2 = []
             for pub in tmp.index:
 
-                print(data1["name"][i], data2["name"][pub], "ratio is ",
-                      fuzz.partial_ratio(data1["name"][i], data2["name"][pub]))
-                tmp_2.append(fuzz.partial_ratio(data1["name"][i], data2["name"][
-                    pub]))
+                print(
+                    data1["name"][i],
+                    data2["name"][pub],
+                    "ratio is ",
+                    fuzz.partial_ratio(data1["name"][i], data2["name"][pub]),
+                )
+                tmp_2.append(
+                    fuzz.partial_ratio(data1["name"][i], data2["name"][pub])
+                )
             if (pd.Series(tmp_2) < 55).all():
                 lst.append((i, data1["name"][i], min(dists[i]), 3))
             else:
@@ -57,13 +56,9 @@ def which_pubs(
 def main():
 
     guindex_pubs = pd.read_csv(
-        "guindex_pubs_no_dupes.csv",
-        index_col="Unnamed: 0"
+        "guindex_pubs_no_dupes.csv", index_col="Unnamed: 0"
     )
-    osm_pubs = pd.read_csv(
-        "osm_pubs_no_dupes.csv",
-        index_col="Unnamed: 0"
-    )
+    osm_pubs = pd.read_csv("osm_pubs_no_dupes.csv", index_col="Unnamed: 0")
 
     osm_pubs = osm_pubs.loc[~osm_pubs["name"].str.endswith("(closed)"), :]
 
@@ -86,7 +81,7 @@ def main():
             guindex_counties[county],
             county,
             dists,
-            cross=True
+            cross=True,
         )
 
     osm_which = {}
@@ -105,7 +100,11 @@ def main():
     for county in counties:
         osm_lst.append(len(osm_which[county]))
 
-    print("There are ", sum(osm_lst), " OSM pubs that are not in Guindex.")
+    print(
+        "------------\n There are ",
+        sum(osm_lst),
+        " OSM pubs that are not " "in Guindex.\n" "------------",
+    )
 
     transposed_dists = {k: v.T for k, v in dists.items()}
 
@@ -125,7 +124,11 @@ def main():
     for county in counties:
         guindex_lst.append(len(guindex_which[county]))
 
-    print("There are ", sum(guindex_lst), " Guindex pubs not in OSM.")
+    print(
+        "------------\n There are ",
+        sum(guindex_lst),
+        " Guindex pubs not " "in OSM. \n ------------",
+    )
 
     return osm_which, guindex_which, dists
 
