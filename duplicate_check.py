@@ -55,7 +55,7 @@ def distances(data1, data2, county, dist_dict, cross=False):
     return dist_dict
 
 
-def which_pubs(dists, data1, data2, county, which_pubs_dict, threshold=0.01):
+def which_pubs(dists, data1, data2, county, which_pubs_dict, threshold=0.05):
     """Creates a list of tuples containing pubs index and name from each
      dataset that are separated by less than a chosen threshold distance."""
 

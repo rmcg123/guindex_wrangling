@@ -60,11 +60,21 @@ def main():
     )
     osm_pubs = pd.read_csv("osm_pubs_no_dupes.csv", index_col="Unnamed: 0")
 
-    osm_pubs = osm_pubs.loc[~osm_pubs["name"].str.endswith("(closed)"), :]
-
-    osm_pubs = osm_pubs.loc[~osm_pubs["name"].str.endswith("(Closed)"), :]
+    osm_pubs["closed"] = np.where(
+        (
+            osm_pubs["name"].str.endswith("(closed)")
+            | osm_pubs["name"].str.endswith("(Closed)")
+        ),
+        True,
+        False,
+    )
 
     osm_pubs = osm_pubs.loc[~osm_pubs["name"].str.contains("Vacant"), :]
+
+    # Clearly incorrect OSM entries
+    osm_pubs_to_drop = ["I Love Vegetables", "I Am In No Way Allergic To Nuts"]
+
+    osm_pubs = osm_pubs.loc[~osm_pubs["name"].isin(osm_pubs_to_drop), :]
 
     counties = guindex_pubs["county"].dropna().unique()
 
@@ -128,6 +138,20 @@ def main():
         "------------\n There are ",
         sum(guindex_lst),
         " Guindex pubs not " "in OSM. \n ------------",
+    )
+
+    idx_dict = {k: [x[0] for x in osm_which[k]] for k in counties}
+
+    new_county_pubs = {
+        k: osm_counties[k].iloc[idx_dict[k], :] for k in counties
+    }
+
+    new_pubs = pd.concat(
+        [v for v in new_county_pubs.values()], ignore_index=True
+    ).reset_index(drop=True)
+
+    new_pubs[["name", "lat", "lon", "county", "closed"]].to_csv(
+        "new_pubs.csv", index=False
     )
 
     return osm_which, guindex_which, dists
