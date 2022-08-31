@@ -71,8 +71,13 @@ def main():
 
     osm_pubs = osm_pubs.loc[~osm_pubs["name"].str.contains("Vacant"), :]
 
-    # Clearly incorrect OSM entries
-    osm_pubs_to_drop = ["I Love Vegetables", "I Am In No Way Allergic To Nuts"]
+    # Clearly incorrect OSM entries and ones that espaced duplicate check
+    osm_pubs_to_drop = [
+        "I Love Vegetables",
+        "I Am In No Way Allergic To Nuts",
+        "Me Gaff Hehe x",
+        "Open Gate Taproom",
+    ]
 
     osm_pubs = osm_pubs.loc[~osm_pubs["name"].isin(osm_pubs_to_drop), :]
 
