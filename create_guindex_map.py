@@ -19,11 +19,14 @@ def create_map():
         pubs["closed"] | (~pubs["serving_guinness"]), np.nan, pubs["price"]
     )
 
+    # Map centre.
     av_lat = pubs["lat"].median()
     av_lon = pubs["lon"].median()
 
+    # Create map.
     tst = folium.Map(location=[av_lat, av_lon], control_scale=True)
 
+    # Set map zoom level to fit pubs.
     tst.fit_bounds(
         [
             pubs[["lat", "lon"]].min().to_list(),
@@ -31,22 +34,19 @@ def create_map():
         ]
     )
 
-    county_clusters = {}
-    counties = list(pubs["county"].unique())
-    for county in counties:
-        county_center = pubs.loc[
-            pubs["county"].eq(county), ["lat", "lon"]
-        ].median().to_list()
-        county_clusters[county] = MarkerCluster(
-            locations=[county_center],
-            name=None,
-            icons=None,
-            popups=None,
-            options={
-                "disableClusteringAtZoom": 15
-            }
-        ).add_to(tst)
+    # Create cluster to add markers to so as to have zoom based clustering
+    # of markers.
+    cluster = MarkerCluster(
+        locations=[[av_lat, av_lon]],
+        name=None,
+        icons=None,
+        popups=None,
+        options={
+            "disableClusteringAtZoom": 14
+        }
+    ).add_to(tst)
 
+    # Go through pubs and create appropriate markers.
     for _, pub in pubs.iterrows():
 
         if pub["closed"]:
@@ -68,7 +68,7 @@ def create_map():
                 [pub["lat"], pub["lon"]],
                 popup=pub["name"] + " - not serving Guinness",
                 icon=not_serving_icon
-            ).add_to(tst)
+            )
 
         elif pd.notnull(pub["price"]):
             price_icon = folium.Icon(
@@ -78,7 +78,7 @@ def create_map():
                 [pub["lat"], pub["lon"]],
                 popup=f"{pub['name']} - €{pub['price']}",
                 icon=price_icon
-            ).add_to(tst)
+            )
 
         else:
             no_price_icon = folium.Icon(
@@ -88,11 +88,13 @@ def create_map():
                 [pub["lat"], pub["lon"]],
                 popup=pub['name'] + " - No data submitted",
                 icon=no_price_icon,
-            ).add_to(tst)
+            )
 
-        marker.add_to(county_clusters[pub["county"]])
+        # Add marker to cluster
+        marker.add_to(cluster)
 
-    tst.save("guindex_map.html")
+    # Save map.
+    tst.save("new_guindex_map.html")
 
 
 if __name__ == "__main__":
