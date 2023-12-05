@@ -3,25 +3,22 @@ import pandas as pd
 import numpy as np
 from folium.plugins import MarkerCluster
 
+import guindex
+
 
 def create_map():
     """Function to create the map page."""
 
-    pubs = pd.read_csv("guindex_pubs.csv")
-
-    # Fictitious information for closed, serving and price. To be replaced
-    # with real columns.
-    pubs["closed"] = np.random.choice([True, False], size=len(pubs))
-    pubs["serving_guinness"] = np.random.choice([True, False], size=len(pubs))
-    pubs["price"] = np.random.choice([5.0, 6.0, np.nan], size=len(pubs))
+    pubs = guindex.pubs()
 
     pubs["price"] = np.where(
-        pubs["closed"] | (~pubs["serving_guinness"]), np.nan, pubs["price"]
+        pubs["closed"] | (~pubs["serving_guinness"]), np.nan,
+        pubs["last_price"]
     )
 
     # Map centre.
-    av_lat = pubs["lat"].median()
-    av_lon = pubs["lon"].median()
+    av_lat = pubs["latitude"].median()
+    av_lon = pubs["longitude"].median()
 
     # Create map.
     tst = folium.Map(location=[av_lat, av_lon], control_scale=True)
@@ -29,8 +26,8 @@ def create_map():
     # Set map zoom level to fit pubs.
     tst.fit_bounds(
         [
-            pubs[["lat", "lon"]].min().to_list(),
-            pubs[["lat", "lon"]].max().to_list()
+            pubs[["latitude", "longitude"]].min().to_list(),
+            pubs[["latitude", "longitude"]].max().to_list()
         ]
     )
 
@@ -55,7 +52,7 @@ def create_map():
                 icon_color="white"
             )
             marker = folium.Marker(
-                [pub["lat"], pub["lon"]],
+                [pub["latitude"], pub["longitude"]],
                 popup=pub["name"] + " - closed",
                 icon=closed_icon
             )
@@ -65,7 +62,7 @@ def create_map():
                 prefix="fa", icon="exclamation", color="red"
             )
             marker = folium.Marker(
-                [pub["lat"], pub["lon"]],
+                [pub["latitude"], pub["longitude"]],
                 popup=pub["name"] + " - not serving Guinness",
                 icon=not_serving_icon
             )
@@ -75,8 +72,9 @@ def create_map():
                 prefix="fa",  icon="beer", color="green"
             )
             marker = folium.Marker(
-                [pub["lat"], pub["lon"]],
-                popup=f"{pub['name']} - €{pub['price']}",
+                [pub["latitude"], pub["longitude"]],
+                popup=f"{pub['name']} - €{pub['price']}, Submitted: "
+                      f"{pub['last_submission_time'].strftime('%Y-%m-%d')}",
                 icon=price_icon
             )
 
@@ -85,7 +83,7 @@ def create_map():
                 prefix="fa", icon="question", color="lightgray"
             )
             marker = folium.Marker(
-                [pub["lat"], pub["lon"]],
+                [pub["latitude"], pub["longitude"]],
                 popup=pub['name'] + " - No data submitted",
                 icon=no_price_icon,
             )
